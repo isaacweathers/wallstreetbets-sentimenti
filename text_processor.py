@@ -1,0 +1,194 @@
+import re
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk.tag import pos_tag
+
+# Download required NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
+
+class TextProcessor:
+    def __init__(self):
+        self.stop_words = set(stopwords.words('english'))
+        self.lemmatizer = WordNetLemmatizer()
+        
+        # Custom stop words for financial context
+        self.financial_stop_words = {
+            'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+            'of', 'with', 'by', 'from', 'up', 'about', 'into', 'over', 'after',
+            'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
+            'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'may', 'might',
+            'must', 'can', 'could', 'this', 'that', 'these', 'those', 'my', 'your',
+            'his', 'her', 'its', 'our', 'their', 'am', 'pm', 'et', 'al', 'etc',
+            'vs', 'vs.', 'e.g', 'e.g.', 'i.e', 'i.e.', 'etc.', 'etc', '&', 'and',
+            'or', 'if', 'then', 'else', 'when', 'where', 'why', 'how', 'what',
+            'who', 'which', 'whom', 'whose', 'there', 'here', 'now', 'then',
+            'today', 'tomorrow', 'yesterday', 'week', 'month', 'year', 'time',
+            'day', 'night', 'morning', 'evening', 'afternoon', 'monday', 'tuesday',
+            'wednesday', 'thursday', 'friday', 'saturday', 'sunday', 'january',
+            'february', 'march', 'april', 'may', 'june', 'july', 'august',
+            'september', 'october', 'november', 'december'
+        }
+        
+        # Add financial stop words to the standard stop words
+        self.stop_words.update(self.financial_stop_words)
+        
+        # Regular expressions for cleaning
+        self.url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
+        self.emoji_pattern = re.compile("["
+            u"\U0001F600-\U0001F64F"  # emoticons
+            u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+            u"\U0001F680-\U0001F6FF"  # transport & map symbols
+            u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+            u"\U00002702-\U000027B0"
+            u"\U000024C2-\U0001F251"
+            "]+", flags=re.UNICODE)
+        self.special_char_pattern = re.compile(r'[^a-zA-Z0-9\s$]')
+        self.number_pattern = re.compile(r'\b\d+\b')
+        
+        # Ticker patterns
+        self.cashtag_pattern = re.compile(r'\$[A-Za-z]{1,5}(?:\.[A-Za-z]{1,2})?')
+        self.ticker_pattern = re.compile(r'(?:^|\s)([A-Za-z]{1,5}(?:\.[A-Za-z]{1,2})?)(?:\s|$)')
+        self.crypto_pattern = re.compile(r'(?:^|\s)(BTC|ETH|DOGE|XRP|ADA|SOL|DOT|LINK|UNI|AAVE)(?:\s|$)')
+        
+        # Common words that might be mistaken for tickers
+        self.common_words = {
+            'a', 'i', 'am', 'an', 'at', 'by', 'do', 'go', 'hi', 'if', 'in', 'it', 'me', 'my', 'no', 'of', 
+            'on', 'or', 'so', 'to', 'up', 'us', 'we', 'he', 'she', 'the', 'and', 'for', 'are', 'but', 
+            'not', 'you', 'all', 'any', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 
+            'has', 'him', 'his', 'how', 'man', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 
+            'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use', 'that', 'with', 'have', 'this', 
+            'will', 'your', 'from', 'they', 'know', 'people', 'into', 'year', 'good', 'some', 'could', 
+            'them', 'see', 'other', 'than', 'then', 'now', 'look', 'only', 'come', 'its', 'over', 
+            'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 
+            'way', ' ',
+        }
+        
+    def clean_text(self, text):
+        """
+        Clean the text by removing URLs, emojis, special characters, and numbers.
+        Preserve $ symbols for tickers.
+        """
+        if not isinstance(text, str):
+            return ""
+            
+        # Convert to lowercase
+        text = text.lower()
+        
+        # Remove URLs
+        text = self.url_pattern.sub(' ', text)
+        
+        # Remove emojis
+        text = self.emoji_pattern.sub(' ', text)
+        
+        # Remove special characters (keep $ for tickers)
+        text = self.special_char_pattern.sub(' ', text)
+        
+        # Remove standalone numbers (but keep numbers that are part of tickers)
+        text = self.number_pattern.sub('', text)
+        
+        # Remove extra whitespace
+        text = ' '.join(text.split())
+        
+        return text
+    
+    def is_ticker(self, word):
+        """
+        Check if a word is a stock ticker.
+        Tickers are typically 1-5 characters long and may contain $.
+        """
+        # Remove $ if present
+        word = word.replace('$', '')
+        
+        # Check if it's a valid ticker format
+        return bool(re.match(r'^[A-Za-z]{1,5}(?:\.[A-Za-z]{1,2})?$', word)) and word.upper() not in self.common_words
+    
+    def extract_tickers(self, text):
+        """
+        Extract stock tickers from text.
+        Returns a list of unique tickers found in the text.
+        """
+        if not isinstance(text, str):
+            return []
+            
+        # Find cashtags ($TICKER)
+        cashtags = self.cashtag_pattern.findall(text)
+        cashtags = [tag.replace('$', '') for tag in cashtags]
+        
+        # Find standalone tickers (without $)
+        standalone_tickers = self.ticker_pattern.findall(text)
+        
+        # Find crypto tickers
+        crypto_tickers = self.crypto_pattern.findall(text)
+        
+        # Combine all tickers
+        all_tickers = cashtags + standalone_tickers + crypto_tickers
+        
+        # Filter out common words that might be mistaken for tickers
+        tickers = [ticker.upper() for ticker in all_tickers if ticker.upper() not in self.common_words]
+        
+        # Remove duplicates and sort
+        return sorted(list(set(tickers)))
+    
+    def tokenize(self, text):
+        """
+        Tokenize the text into words.
+        """
+        return word_tokenize(text)
+    
+    def remove_stop_words(self, tokens):
+        """
+        Remove stop words from the token list.
+        Preserve tickers even if they match stop words.
+        """
+        return [token for token in tokens if token not in self.stop_words or self.is_ticker(token)]
+    
+    def lemmatize(self, tokens):
+        """
+        Lemmatize the tokens using WordNet lemmatizer.
+        Preserve tickers.
+        """
+        lemmatized_tokens = []
+        for token in tokens:
+            if self.is_ticker(token):
+                lemmatized_tokens.append(token)
+            else:
+                # Get the part of speech tag
+                pos_tagged = pos_tag([token])[0][1]
+                
+                # Map the POS tag to WordNet POS tag
+                pos = 'n'  # default to noun
+                if pos_tagged.startswith('J'):
+                    pos = 'a'  # adjective
+                elif pos_tagged.startswith('V'):
+                    pos = 'v'  # verb
+                elif pos_tagged.startswith('R'):
+                    pos = 'r'  # adverb
+                
+                # Lemmatize the token
+                lemmatized_token = self.lemmatizer.lemmatize(token, pos=pos)
+                lemmatized_tokens.append(lemmatized_token)
+        
+        return lemmatized_tokens
+    
+    def process_text(self, text):
+        """
+        Process the text through all cleaning and preprocessing steps.
+        """
+        # Clean the text
+        cleaned_text = self.clean_text(text)
+        
+        # Tokenize
+        tokens = self.tokenize(cleaned_text)
+        
+        # Remove stop words
+        tokens = self.remove_stop_words(tokens)
+        
+        # Lemmatize
+        tokens = self.lemmatize(tokens)
+        
+        return tokens 
