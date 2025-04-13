@@ -1,0 +1,8 @@
+Flask==2.0.1
+Werkzeug==2.0.1
+praw==7.7.1
+nltk==3.8.1
+python-dotenv==1.0.0
+numpy>=1.26.0
+pandas>=2.1.0
+regex>=2021.8.3 
