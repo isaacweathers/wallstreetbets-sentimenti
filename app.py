@@ -10,6 +10,8 @@ The application uses:
 - NLTK's VADER sentiment analyzer for sentiment analysis
 - Custom text processing for cleaning and tokenization
 - Latent Dirichlet Allocation (LDA) for topic modeling
+- Pandas for data manipulation and trend analysis
+- Matplotlib and Seaborn for data visualization
 """
 
 import os
@@ -22,6 +24,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from text_processor import TextProcessor
 from topic_modeler import TopicModeler
+from trend_analyzer import TrendAnalyzer
 
 # Download required NLTK data for sentiment analysis
 nltk.download('vader_lexicon')
@@ -32,6 +35,12 @@ load_dotenv()
 # Initialize Flask application
 app = Flask(__name__)
 
+# Add custom Jinja2 filter for datetime formatting
+@app.template_filter('datetime')
+def format_datetime(timestamp):
+    """Format a Unix timestamp as a readable datetime string."""
+    return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+
 # Initialize Reddit API client using credentials from environment variables
 reddit = praw.Reddit(
     client_id=os.getenv('REDDIT_CLIENT_ID'),
@@ -39,10 +48,11 @@ reddit = praw.Reddit(
     user_agent=os.getenv('REDDIT_USER_AGENT')
 )
 
-# Initialize text processor, sentiment analyzer, and topic modeler
+# Initialize text processor, sentiment analyzer, topic modeler, and trend analyzer
 text_processor = TextProcessor()
 sentiment_analyzer = SentimentIntensityAnalyzer()
 topic_modeler = TopicModeler(n_topics=5)  # Extract 5 topics from the posts
+trend_analyzer = TrendAnalyzer()
 
 def get_wsb_posts():
     """
@@ -72,19 +82,31 @@ def get_wsb_posts():
         # Get sentiment scores using VADER sentiment analyzer
         sentiment_scores = sentiment_analyzer.polarity_scores(post.title)
         
+        # Determine sentiment label based on compound score
+        if sentiment_scores['compound'] > 0.05:
+            sentiment_label = 'positive'
+        elif sentiment_scores['compound'] < -0.05:
+            sentiment_label = 'negative'
+        else:
+            sentiment_label = 'neutral'
+        
         # Create a dictionary with post data and analysis results
         posts.append({
+            'id': post.id,
             'title': post.title,
-            'processed_title': ' '.join(processed_title),
+            'processed_text': ' '.join(processed_title),
             'tickers': tickers,
             'score': post.score,
             'num_comments': post.num_comments,
             'url': f"https://reddit.com{post.permalink}",
-            'created_utc': datetime.fromtimestamp(post.created_utc),
-            'compound_score': sentiment_scores['compound'],
-            'positive_score': sentiment_scores['pos'],
-            'negative_score': sentiment_scores['neg'],
-            'neutral_score': sentiment_scores['neu']
+            'created_utc': post.created_utc,
+            'sentiment': {
+                'compound': sentiment_scores['compound'],
+                'pos': sentiment_scores['pos'],
+                'neg': sentiment_scores['neg'],
+                'neu': sentiment_scores['neu'],
+                'label': sentiment_label
+            }
         })
     
     return posts
@@ -92,14 +114,15 @@ def get_wsb_posts():
 @app.route('/')
 def index():
     """
-    Render the main page with WSB posts, sentiment analysis, and topic modeling.
+    Render the main page with WSB posts, sentiment analysis, topic modeling, and trend analysis.
     
     This route:
     1. Fetches posts from r/wallstreetbets
     2. Performs sentiment analysis on the posts
     3. Performs topic modeling on the post titles
     4. Calculates statistics about sentiment and ticker mentions
-    5. Renders the index.html template with the results
+    5. Performs trend analysis on the posts
+    6. Renders the index.html template with the results
     
     Returns:
         str: Rendered HTML template with post data and analysis results
@@ -108,18 +131,30 @@ def index():
     posts = get_wsb_posts()
     
     # Convert to DataFrame for easier manipulation
-    df = pd.DataFrame(posts)
+    # Flatten the sentiment dictionary to make it easier to work with
+    flattened_posts = []
+    for post in posts:
+        flattened_post = post.copy()
+        # Extract sentiment values from the nested dictionary
+        flattened_post['sentiment_compound'] = post['sentiment']['compound']
+        flattened_post['sentiment_pos'] = post['sentiment']['pos']
+        flattened_post['sentiment_neg'] = post['sentiment']['neg']
+        flattened_post['sentiment_neu'] = post['sentiment']['neu']
+        flattened_post['sentiment_label'] = post['sentiment']['label']
+        flattened_posts.append(flattened_post)
+    
+    df = pd.DataFrame(flattened_posts)
     
     # Sort by compound sentiment score (most positive first)
-    df = df.sort_values('compound_score', ascending=False)
+    df = df.sort_values('sentiment_compound', ascending=False)
     
     # Calculate overall sentiment statistics
     sentiment_stats = {
         'total_posts': len(df),
-        'positive_posts': len(df[df['compound_score'] > 0.05]),
-        'negative_posts': len(df[df['compound_score'] < -0.05]),
-        'neutral_posts': len(df[(df['compound_score'] >= -0.05) & (df['compound_score'] <= 0.05)]),
-        'avg_sentiment': df['compound_score'].mean()
+        'positive_posts': len(df[df['sentiment_compound'] > 0.05]),
+        'negative_posts': len(df[df['sentiment_compound'] < -0.05]),
+        'neutral_posts': len(df[(df['sentiment_compound'] >= -0.05) & (df['sentiment_compound'] <= 0.05)]),
+        'avg_sentiment': df['sentiment_compound'].mean()
     }
     
     # Get all unique tickers mentioned
@@ -147,10 +182,11 @@ def index():
         document_topics = topic_modeler.get_document_topics(df['title'].tolist())
         
         # Add topic information to the posts
-        for i, post in enumerate(df.to_dict('records')):
+        for i, post in enumerate(posts):
             doc, topic_idx, topic_prob = document_topics[i]
             post['topic_idx'] = topic_idx
             post['topic_prob'] = topic_prob
+            post['topic'] = f"Topic {topic_idx+1}"
             post['topic_keywords'] = topic_modeler.get_topic_keywords(topic_idx)
         
         # Get all topics for display
@@ -163,12 +199,34 @@ def index():
     else:
         all_topics = []
     
+    # Perform trend analysis
+    trend_data = {}
+    if len(posts) > 0:
+        # Create DataFrame for trend analysis
+        trend_analyzer.create_dataframe(posts)
+        
+        # Get ticker trends
+        trend_data['ticker_trends'] = trend_analyzer.get_ticker_trends(top_n=5, time_period='hour')
+        
+        # Get topic trends
+        trend_data['topic_trends'] = trend_analyzer.get_topic_trends(time_period='hour')
+        
+        # Get sentiment trends
+        trend_data['sentiment_trends'] = trend_analyzer.get_sentiment_trends(time_period='hour')
+        
+        # Generate plots
+        trend_data['ticker_mentions_plot'] = trend_analyzer.plot_ticker_mentions(top_n=5, time_period='hour')
+        trend_data['ticker_sentiment_plot'] = trend_analyzer.plot_ticker_sentiment(top_n=5, time_period='hour')
+        trend_data['topic_mentions_plot'] = trend_analyzer.plot_topic_mentions(time_period='hour')
+        trend_data['sentiment_trend_plot'] = trend_analyzer.plot_sentiment_trend(time_period='hour')
+    
     # Render the template with all the data
     return render_template('index.html', 
-                          posts=df.to_dict('records'), 
+                          posts=posts, 
                           stats=sentiment_stats, 
                           tickers=sorted_tickers,
-                          topics=all_topics)
+                          topics=all_topics,
+                          trend_data=trend_data)
 
 if __name__ == '__main__':
     # Run the Flask application in debug mode
