@@ -59,6 +59,25 @@
             font-size: 0.7em;
             opacity: 0.8;
         }
+        
+        /* Trend analysis styling */
+        .trend-plot {
+            width: 100%;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+        .trend-table {
+            font-size: 0.9em;
+        }
+        .trend-table th {
+            font-size: 0.8em;
+        }
+        .trend-table td {
+            font-size: 0.8em;
+        }
+        .nav-tabs .nav-link {
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -150,6 +169,212 @@
         </div>
         {% endif %}
         
+        <!-- Trend Analysis Section -->
+        {% if trend_data %}
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Trend Analysis</h5>
+            </div>
+            <div class="card-body">
+                <!-- Ticker Trends -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">Ticker Trends</h6>
+                    
+                    <!-- Ticker Mentions Plot -->
+                    {% if trend_data.ticker_mentions_plot %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Top Ticker Mentions Over Time</h6>
+                        <img src="data:image/png;base64,{{ trend_data.ticker_mentions_plot }}" class="trend-plot" alt="Ticker Mentions Over Time">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Ticker Sentiment Plot -->
+                    {% if trend_data.ticker_sentiment_plot %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Top Ticker Sentiment Over Time</h6>
+                        <img src="data:image/png;base64,{{ trend_data.ticker_sentiment_plot }}" class="trend-plot" alt="Ticker Sentiment Over Time">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Ticker Trends Data -->
+                    {% if trend_data.ticker_trends and trend_data.ticker_trends.top_tickers %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Top Tickers Data</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered trend-table">
+                                <thead>
+                                    <tr>
+                                        <th>Ticker</th>
+                                        <th>Total Mentions</th>
+                                        <th>Average Sentiment</th>
+                                        <th>Total Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ticker in trend_data.ticker_trends.top_tickers %}
+                                    <tr>
+                                        <td>${{ ticker }}</td>
+                                        <td>
+                                            {% set total_mentions = 0 %}
+                                            {% for time, counts in trend_data.ticker_trends.mention_counts.items() %}
+                                                {% if ticker in counts %}
+                                                    {% set total_mentions = total_mentions + counts[ticker] %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {{ total_mentions }}
+                                        </td>
+                                        <td>
+                                            {% set total_sentiment = 0 %}
+                                            {% set count = 0 %}
+                                            {% for time, sentiments in trend_data.ticker_trends.avg_sentiment.items() %}
+                                                {% if ticker in sentiments %}
+                                                    {% set total_sentiment = total_sentiment + sentiments[ticker] %}
+                                                    {% set count = count + 1 %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% if count > 0 %}
+                                                {{ "%.2f"|format(total_sentiment / count) }}
+                                            {% else %}
+                                                0.00
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% set total_score = 0 %}
+                                            {% for time, scores in trend_data.ticker_trends.sum_scores.items() %}
+                                                {% if ticker in scores %}
+                                                    {% set total_score = total_score + scores[ticker] %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {{ total_score }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Topic Trends -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">Topic Trends</h6>
+                    
+                    <!-- Topic Mentions Plot -->
+                    {% if trend_data.topic_mentions_plot %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Topic Mentions Over Time</h6>
+                        <img src="data:image/png;base64,{{ trend_data.topic_mentions_plot }}" class="trend-plot" alt="Topic Mentions Over Time">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Topic Trends Data -->
+                    {% if trend_data.topic_trends and trend_data.topic_trends.topics %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Topics Data</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered trend-table">
+                                <thead>
+                                    <tr>
+                                        <th>Topic</th>
+                                        <th>Total Mentions</th>
+                                        <th>Average Sentiment</th>
+                                        <th>Total Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for topic in trend_data.topic_trends.topics %}
+                                    <tr>
+                                        <td>{{ topic }}</td>
+                                        <td>
+                                            {% set total_mentions = 0 %}
+                                            {% for time, counts in trend_data.topic_trends.mention_counts.items() %}
+                                                {% if topic in counts %}
+                                                    {% set total_mentions = total_mentions + counts[topic] %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {{ total_mentions }}
+                                        </td>
+                                        <td>
+                                            {% set total_sentiment = 0 %}
+                                            {% set count = 0 %}
+                                            {% for time, sentiments in trend_data.topic_trends.avg_sentiment.items() %}
+                                                {% if topic in sentiments %}
+                                                    {% set total_sentiment = total_sentiment + sentiments[topic] %}
+                                                    {% set count = count + 1 %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% if count > 0 %}
+                                                {{ "%.2f"|format(total_sentiment / count) }}
+                                            {% else %}
+                                                0.00
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% set total_score = 0 %}
+                                            {% for time, scores in trend_data.topic_trends.sum_scores.items() %}
+                                                {% if topic in scores %}
+                                                    {% set total_score = total_score + scores[topic] %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {{ total_score }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Sentiment Trends -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">Sentiment Trends</h6>
+                    
+                    <!-- Sentiment Trend Plot -->
+                    {% if trend_data.sentiment_trend_plot %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Sentiment Over Time</h6>
+                        <img src="data:image/png;base64,{{ trend_data.sentiment_trend_plot }}" class="trend-plot" alt="Sentiment Over Time">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Sentiment Trends Data -->
+                    {% if trend_data.sentiment_trends %}
+                    <div class="mb-3">
+                        <h6 class="text-muted">Sentiment Data</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered trend-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time Period</th>
+                                        <th>Compound Sentiment</th>
+                                        <th>Positive Sentiment</th>
+                                        <th>Negative Sentiment</th>
+                                        <th>Neutral Sentiment</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for time, compound in trend_data.sentiment_trends.avg_compound.items() %}
+                                    <tr>
+                                        <td>{{ time }}</td>
+                                        <td>{{ "%.2f"|format(compound) }}</td>
+                                        <td>{{ "%.2f"|format(trend_data.sentiment_trends.avg_positive[time]) }}</td>
+                                        <td>{{ "%.2f"|format(trend_data.sentiment_trends.avg_negative[time]) }}</td>
+                                        <td>{{ "%.2f"|format(trend_data.sentiment_trends.avg_neutral[time]) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
         <!-- Posts List Section -->
         <div class="row">
             {% for post in posts %}
@@ -161,7 +386,7 @@
                                 {{ post.title }}
                             </a>
                         </h5>
-                        <p class="processed-text">{{ post.processed_title }}</p>
+                        <p class="processed-text">{{ post.processed_text }}</p>
                         
                         <!-- Tickers Section -->
                         {% if post.tickers %}
@@ -176,7 +401,7 @@
                         {% if post.topic_idx is defined %}
                         <div class="mb-2">
                             <span class="badge bg-success topic-badge">
-                                Topic {{ post.topic_idx + 1 }} <span class="topic-probability">({{ "%.2f"|format(post.topic_prob) }})</span>
+                                {{ post.topic }} <span class="topic-probability">({{ "%.2f"|format(post.topic_prob) }})</span>
                             </span>
                             <div class="mt-1">
                                 {% for keyword, weight in post.topic_keywords %}
@@ -195,18 +420,18 @@
                                 <span class="badge bg-info">Comments: {{ post.num_comments }}</span>
                             </div>
                             <div>
-                                {% if post.compound_score > 0.05 %}
-                                <span class="sentiment-positive">Positive ({{ "%.2f"|format(post.compound_score) }})</span>
-                                {% elif post.compound_score < -0.05 %}
-                                <span class="sentiment-negative">Negative ({{ "%.2f"|format(post.compound_score) }})</span>
+                                {% if post.sentiment.compound > 0.05 %}
+                                <span class="sentiment-positive">Positive ({{ "%.2f"|format(post.sentiment.compound) }})</span>
+                                {% elif post.sentiment.compound < -0.05 %}
+                                <span class="sentiment-negative">Negative ({{ "%.2f"|format(post.sentiment.compound) }})</span>
                                 {% else %}
-                                <span class="sentiment-neutral">Neutral ({{ "%.2f"|format(post.compound_score) }})</span>
+                                <span class="sentiment-neutral">Neutral ({{ "%.2f"|format(post.sentiment.compound) }})</span>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     <div class="card-footer text-muted">
-                        Posted {{ post.created_utc.strftime('%Y-%m-%d %H:%M:%S') }}
+                        Posted {{ post.created_utc|datetime }}
                     </div>
                 </div>
             </div>

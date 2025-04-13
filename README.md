@@ -36,12 +36,19 @@ This application fetches posts from the r/wallstreetbets subreddit, performs sen
 - Counts the frequency of each ticker
 - Displays the most mentioned tickers
 
+### Trend Analysis
+- Aggregates data by time (hourly) and by stock ticker or topic
+- Calculates metrics such as mention counts, average sentiment, and post scores
+- Visualizes trends using matplotlib and seaborn
+- Provides interactive plots for ticker mentions, ticker sentiment, topic mentions, and overall sentiment
+- Displays detailed data tables for tickers, topics, and sentiment over time
+
 ### User Interface
 - Modern, responsive UI using Bootstrap
 - Displays posts with their scores, comment counts, and sentiment scores
 - Color-coded sentiment indicators (green for positive, red for negative, gray for neutral)
 - Interactive cards with hover effects
-- Organized sections for sentiment statistics, topic modeling results, and ticker statistics
+- Organized sections for sentiment statistics, topic modeling results, ticker statistics, and trend analysis
 
 ## Setup
 
@@ -77,6 +84,7 @@ This application fetches posts from the r/wallstreetbets subreddit, performs sen
 - `app.py` - Main Flask application
 - `text_processor.py` - Text processing utilities
 - `topic_modeler.py` - Topic modeling using LDA
+- `trend_analyzer.py` - Trend analysis and visualization
 - `templates/index.html` - HTML template for the web interface
 - `requirements.txt` - Python dependencies
 
@@ -86,9 +94,12 @@ This application fetches posts from the r/wallstreetbets subreddit, performs sen
 - **PRAW** - Reddit API wrapper
 - **NLTK** - Natural Language Toolkit for sentiment analysis
 - **scikit-learn** - Machine learning library for topic modeling
+- **pandas** - Data manipulation and analysis
+- **matplotlib** - Data visualization
+- **seaborn** - Statistical data visualization
 - **Bootstrap** - Frontend framework
 - **Python-dotenv** - Environment variable management
-- **pandas** - Data manipulation and analysis
+- **Jinja2** - Template engine
 
 ## Future Enhancements
 
@@ -97,4 +108,6 @@ This application fetches posts from the r/wallstreetbets subreddit, performs sen
 - Add more detailed post analysis
 - Include sentiment analysis for comments
 - Add visualization of sentiment trends over time
-- Implement real-time updates using WebSockets 
+- Implement real-time updates using WebSockets
+- Add more advanced trend analysis features
+- Implement machine learning for stock price prediction 
