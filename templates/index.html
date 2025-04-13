@@ -35,6 +35,20 @@
             font-size: 0.7em;
             opacity: 0.8;
         }
+        .topic-badge {
+            font-size: 0.8em;
+            margin-right: 0.3em;
+            margin-bottom: 0.3em;
+            display: inline-block;
+        }
+        .topic-keyword {
+            font-size: 0.7em;
+            opacity: 0.8;
+        }
+        .topic-probability {
+            font-size: 0.7em;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -77,6 +91,37 @@
             </div>
         </div>
         
+        <!-- Topic Modeling Results -->
+        {% if topics %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Topic Modeling Results</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for topic in topics %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-success bg-opacity-10">
+                                <h6 class="mb-0">Topic {{ topic.idx + 1 }}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap">
+                                    {% for keyword, weight in topic.keywords %}
+                                    <span class="badge bg-success topic-badge">
+                                        {{ keyword }} <span class="topic-keyword">({{ "%.2f"|format(weight) }})</span>
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
         <!-- Ticker Statistics -->
         {% if tickers %}
         <div class="card mb-4">
@@ -114,6 +159,22 @@
                             {% for ticker in post.tickers %}
                             <span class="badge bg-info ticker-badge">${{ ticker }}</span>
                             {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Topic -->
+                        {% if post.topic_idx is defined %}
+                        <div class="mb-2">
+                            <span class="badge bg-success topic-badge">
+                                Topic {{ post.topic_idx + 1 }} <span class="topic-probability">({{ "%.2f"|format(post.topic_prob) }})</span>
+                            </span>
+                            <div class="mt-1">
+                                {% for keyword, weight in post.topic_keywords %}
+                                <span class="badge bg-success bg-opacity-50 topic-badge">
+                                    {{ keyword }} <span class="topic-keyword">({{ "%.2f"|format(weight) }})</span>
+                                </span>
+                                {% endfor %}
+                            </div>
                         </div>
                         {% endif %}
                         

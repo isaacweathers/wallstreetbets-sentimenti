@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from dotenv import load_dotenv
 from text_processor import TextProcessor
+from topic_modeler import TopicModeler
 
 # Download required NLTK data
 nltk.download('vader_lexicon')
@@ -23,9 +24,10 @@ reddit = praw.Reddit(
     user_agent=os.getenv('REDDIT_USER_AGENT')
 )
 
-# Initialize text processor and sentiment analyzer
+# Initialize text processor, sentiment analyzer, and topic modeler
 text_processor = TextProcessor()
 sentiment_analyzer = SentimentIntensityAnalyzer()
+topic_modeler = TopicModeler(n_topics=5)
 
 def get_wsb_posts():
     """Fetch top posts from r/wallstreetbets from the last 24 hours."""
@@ -61,7 +63,7 @@ def get_wsb_posts():
 
 @app.route('/')
 def index():
-    """Render the main page with WSB posts and sentiment analysis."""
+    """Render the main page with WSB posts, sentiment analysis, and topic modeling."""
     posts = get_wsb_posts()
     
     # Convert to DataFrame for easier manipulation
@@ -95,7 +97,36 @@ def index():
     # Sort tickers by frequency
     sorted_tickers = sorted(ticker_counts.items(), key=lambda x: x[1], reverse=True)
     
-    return render_template('index.html', posts=df.to_dict('records'), stats=sentiment_stats, tickers=sorted_tickers)
+    # Perform topic modeling on post titles
+    if len(df) > 0:
+        # Fit the topic modeler
+        topic_modeler.fit(df['title'].tolist())
+        
+        # Get document topics
+        document_topics = topic_modeler.get_document_topics(df['title'].tolist())
+        
+        # Add topic information to the posts
+        for i, post in enumerate(df.to_dict('records')):
+            doc, topic_idx, topic_prob = document_topics[i]
+            post['topic_idx'] = topic_idx
+            post['topic_prob'] = topic_prob
+            post['topic_keywords'] = topic_modeler.get_topic_keywords(topic_idx)
+        
+        # Get all topics
+        all_topics = []
+        for i in range(topic_modeler.n_topics):
+            all_topics.append({
+                'idx': i,
+                'keywords': topic_modeler.get_topic_keywords(i)
+            })
+    else:
+        all_topics = []
+    
+    return render_template('index.html', 
+                          posts=df.to_dict('records'), 
+                          stats=sentiment_stats, 
+                          tickers=sorted_tickers,
+                          topics=all_topics)
 
 if __name__ == '__main__':
     app.run(debug=True) 
