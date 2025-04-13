@@ -1,3 +1,18 @@
+"""
+Topic Modeling Module
+
+This module provides a TopicModeler class that implements Latent Dirichlet Allocation (LDA)
+for topic modeling on text documents. It uses scikit-learn's implementation of LDA and
+includes methods for preprocessing, fitting, and extracting topics from documents.
+
+The TopicModeler class:
+1. Preprocesses documents using a custom TextProcessor
+2. Creates a document-term matrix using CountVectorizer
+3. Fits an LDA model to the document-term matrix
+4. Extracts topics and their keywords
+5. Provides methods to get the most likely topic for each document
+"""
+
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
@@ -5,6 +20,25 @@ import pandas as pd
 from text_processor import TextProcessor
 
 class TopicModeler:
+    """
+    A class for topic modeling using Latent Dirichlet Allocation (LDA).
+    
+    This class provides methods for preprocessing documents, fitting an LDA model,
+    and extracting topics and their keywords. It uses scikit-learn's implementation
+    of LDA and includes methods for getting the most likely topic for each document.
+    
+    Attributes:
+        n_topics (int): Number of topics to extract
+        max_iter (int): Maximum number of iterations for LDA
+        learning_decay (float): Learning decay parameter for LDA
+        random_state (int): Random state for reproducibility
+        text_processor (TextProcessor): Text processor for preprocessing documents
+        vectorizer (CountVectorizer): Vectorizer for creating document-term matrix
+        lda_model (LatentDirichletAllocation): LDA model for topic modeling
+        feature_names (list): List of feature names (words) from the vectorizer
+        topics (list): List of topics, each containing (word, weight) tuples
+    """
+    
     def __init__(self, n_topics=5, max_iter=10, learning_decay=0.7, random_state=42):
         """
         Initialize the topic modeler with LDA parameters.
@@ -46,6 +80,11 @@ class TopicModeler:
         """
         Preprocess a list of documents for topic modeling.
         
+        This method:
+        1. Processes each document using the TextProcessor
+        2. Joins the processed tokens back into a string
+        3. Returns a list of preprocessed documents
+        
         Args:
             documents (list): List of text documents
             
@@ -67,6 +106,12 @@ class TopicModeler:
     def fit(self, documents):
         """
         Fit the topic model to the documents.
+        
+        This method:
+        1. Preprocesses the documents
+        2. Creates a document-term matrix using the vectorizer
+        3. Fits the LDA model to the document-term matrix
+        4. Extracts topics and their keywords
         
         Args:
             documents (list): List of text documents
@@ -95,6 +140,12 @@ class TopicModeler:
         """
         Extract the top words for each topic.
         
+        This method:
+        1. Gets the components of the LDA model
+        2. For each topic, gets the indices of the top words
+        3. Gets the words and their weights
+        4. Returns a list of topics, each containing (word, weight) tuples
+        
         Args:
             n_top_words (int): Number of top words to extract per topic
             
@@ -122,6 +173,11 @@ class TopicModeler:
         """
         Transform documents into topic distributions.
         
+        This method:
+        1. Preprocesses the documents
+        2. Creates a document-term matrix using the vectorizer
+        3. Transforms the document-term matrix into topic distributions
+        
         Args:
             documents (list): List of text documents
             
@@ -142,6 +198,11 @@ class TopicModeler:
     def get_document_topics(self, documents):
         """
         Get the most likely topic for each document.
+        
+        This method:
+        1. Transforms the documents into topic distributions
+        2. Gets the most likely topic for each document
+        3. Returns a list of (document, topic_idx, topic_probability) tuples
         
         Args:
             documents (list): List of text documents
@@ -166,6 +227,10 @@ class TopicModeler:
         """
         Get the keywords for a specific topic.
         
+        This method:
+        1. Checks if the model is fitted and the topic index is valid
+        2. Returns the keywords for the specified topic
+        
         Args:
             topic_idx (int): Index of the topic
             
@@ -180,6 +245,10 @@ class TopicModeler:
     def print_topics(self):
         """
         Print all topics and their keywords.
+        
+        This method:
+        1. Checks if the model is fitted
+        2. Prints each topic and its keywords
         """
         if self.topics is None:
             print("Model not fitted yet. Call fit() first.")

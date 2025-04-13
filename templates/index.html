@@ -4,27 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WallStreetBets Sentiment Analysis</title>
+    <!-- Bootstrap CSS for responsive design and styling -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Sentiment color coding */
         .sentiment-positive {
-            color: #28a745;
+            color: #28a745;  /* Green for positive sentiment */
         }
         .sentiment-negative {
-            color: #dc3545;
+            color: #dc3545;  /* Red for negative sentiment */
         }
         .sentiment-neutral {
-            color: #6c757d;
+            color: #6c757d;  /* Gray for neutral sentiment */
         }
+        
+        /* Styling for processed text */
         .processed-text {
             font-size: 0.9em;
             color: #6c757d;
         }
+        
+        /* Card hover effects */
         .stats-card {
             transition: transform 0.2s;
         }
         .stats-card:hover {
             transform: translateY(-5px);
         }
+        
+        /* Ticker badge styling */
         .ticker-badge {
             font-size: 0.8em;
             margin-right: 0.3em;
@@ -35,6 +43,8 @@
             font-size: 0.7em;
             opacity: 0.8;
         }
+        
+        /* Topic badge styling */
         .topic-badge {
             font-size: 0.8em;
             margin-right: 0.3em;
@@ -55,7 +65,7 @@
     <div class="container py-4">
         <h1 class="text-center mb-4">WallStreetBets Sentiment Analysis</h1>
         
-        <!-- Sentiment Statistics -->
+        <!-- Sentiment Statistics Section -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card stats-card bg-light">
@@ -91,7 +101,7 @@
             </div>
         </div>
         
-        <!-- Topic Modeling Results -->
+        <!-- Topic Modeling Results Section -->
         {% if topics %}
         <div class="card mb-4">
             <div class="card-header bg-success text-white">
@@ -122,7 +132,7 @@
         </div>
         {% endif %}
         
-        <!-- Ticker Statistics -->
+        <!-- Ticker Statistics Section -->
         {% if tickers %}
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
@@ -140,7 +150,7 @@
         </div>
         {% endif %}
         
-        <!-- Posts List -->
+        <!-- Posts List Section -->
         <div class="row">
             {% for post in posts %}
             <div class="col-md-6 mb-4">
@@ -153,7 +163,7 @@
                         </h5>
                         <p class="processed-text">{{ post.processed_title }}</p>
                         
-                        <!-- Tickers -->
+                        <!-- Tickers Section -->
                         {% if post.tickers %}
                         <div class="mb-2">
                             {% for ticker in post.tickers %}
@@ -162,7 +172,7 @@
                         </div>
                         {% endif %}
                         
-                        <!-- Topic -->
+                        <!-- Topic Section -->
                         {% if post.topic_idx is defined %}
                         <div class="mb-2">
                             <span class="badge bg-success topic-badge">
@@ -178,6 +188,7 @@
                         </div>
                         {% endif %}
                         
+                        <!-- Post Metadata Section -->
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="badge bg-primary">Score: {{ post.score }}</span>
@@ -203,6 +214,7 @@
         </div>
     </div>
     
+    <!-- Bootstrap JavaScript for interactive components -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 

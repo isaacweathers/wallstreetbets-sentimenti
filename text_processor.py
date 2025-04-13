@@ -1,3 +1,19 @@
+"""
+Text Processing Module
+
+This module provides a TextProcessor class for cleaning and preprocessing text data,
+with special handling for financial text. It includes methods for:
+- Cleaning text by removing URLs, emojis, special characters, and numbers
+- Extracting stock tickers from text
+- Tokenizing text into words
+- Removing stop words
+- Lemmatizing words
+
+The TextProcessor class is designed to work with financial text, particularly
+from social media platforms like Reddit, and includes special handling for
+stock tickers and financial terminology.
+"""
+
 import re
 import nltk
 from nltk.tokenize import word_tokenize
@@ -12,7 +28,32 @@ nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
 
 class TextProcessor:
+    """
+    A class for processing text data, with special handling for financial text.
+    
+    This class provides methods for cleaning and preprocessing text data,
+    with a focus on financial text from social media platforms. It includes
+    special handling for stock tickers and financial terminology.
+    
+    Attributes:
+        stop_words (set): Set of stop words to remove from text
+        lemmatizer (WordNetLemmatizer): Lemmatizer for reducing words to base form
+        financial_stop_words (set): Set of financial-specific stop words
+        url_pattern (re.Pattern): Regular expression for matching URLs
+        emoji_pattern (re.Pattern): Regular expression for matching emojis
+        special_char_pattern (re.Pattern): Regular expression for matching special characters
+        number_pattern (re.Pattern): Regular expression for matching numbers
+        cashtag_pattern (re.Pattern): Regular expression for matching cashtags ($TICKER)
+        ticker_pattern (re.Pattern): Regular expression for matching tickers
+        crypto_pattern (re.Pattern): Regular expression for matching cryptocurrency tickers
+        common_words (set): Set of common words that might be mistaken for tickers
+    """
+    
     def __init__(self):
+        """
+        Initialize the text processor with stop words, lemmatizer, and regular expressions.
+        """
+        # Initialize stop words from NLTK
         self.stop_words = set(stopwords.words('english'))
         self.lemmatizer = WordNetLemmatizer()
         
@@ -72,6 +113,20 @@ class TextProcessor:
         """
         Clean the text by removing URLs, emojis, special characters, and numbers.
         Preserve $ symbols for tickers.
+        
+        This method:
+        1. Converts text to lowercase
+        2. Removes URLs
+        3. Removes emojis
+        4. Removes special characters (except $ for tickers)
+        5. Removes standalone numbers
+        6. Removes extra whitespace
+        
+        Args:
+            text (str): Text to clean
+            
+        Returns:
+            str: Cleaned text
         """
         if not isinstance(text, str):
             return ""
@@ -100,6 +155,17 @@ class TextProcessor:
         """
         Check if a word is a stock ticker.
         Tickers are typically 1-5 characters long and may contain $.
+        
+        This method:
+        1. Removes $ if present
+        2. Checks if the word matches the ticker pattern
+        3. Checks if the word is not in the common words list
+        
+        Args:
+            word (str): Word to check
+            
+        Returns:
+            bool: True if the word is a ticker, False otherwise
         """
         # Remove $ if present
         word = word.replace('$', '')
@@ -111,6 +177,19 @@ class TextProcessor:
         """
         Extract stock tickers from text.
         Returns a list of unique tickers found in the text.
+        
+        This method:
+        1. Finds cashtags ($TICKER)
+        2. Finds standalone tickers (without $)
+        3. Finds crypto tickers
+        4. Filters out common words that might be mistaken for tickers
+        5. Removes duplicates and sorts
+        
+        Args:
+            text (str): Text to extract tickers from
+            
+        Returns:
+            list: List of unique tickers found in the text
         """
         if not isinstance(text, str):
             return []
@@ -137,6 +216,15 @@ class TextProcessor:
     def tokenize(self, text):
         """
         Tokenize the text into words.
+        
+        This method:
+        1. Uses NLTK's word_tokenize to split text into words
+        
+        Args:
+            text (str): Text to tokenize
+            
+        Returns:
+            list: List of tokens (words)
         """
         return word_tokenize(text)
     
@@ -144,6 +232,16 @@ class TextProcessor:
         """
         Remove stop words from the token list.
         Preserve tickers even if they match stop words.
+        
+        This method:
+        1. Filters out tokens that are in the stop words list
+        2. Preserves tokens that are tickers, even if they match stop words
+        
+        Args:
+            tokens (list): List of tokens to filter
+            
+        Returns:
+            list: Filtered list of tokens
         """
         return [token for token in tokens if token not in self.stop_words or self.is_ticker(token)]
     
@@ -151,6 +249,18 @@ class TextProcessor:
         """
         Lemmatize the tokens using WordNet lemmatizer.
         Preserve tickers.
+        
+        This method:
+        1. Preserves tokens that are tickers
+        2. Gets the part of speech tag for each token
+        3. Maps the POS tag to WordNet POS tag
+        4. Lemmatizes the token using the appropriate POS tag
+        
+        Args:
+            tokens (list): List of tokens to lemmatize
+            
+        Returns:
+            list: Lemmatized list of tokens
         """
         lemmatized_tokens = []
         for token in tokens:
@@ -178,6 +288,18 @@ class TextProcessor:
     def process_text(self, text):
         """
         Process the text through all cleaning and preprocessing steps.
+        
+        This method:
+        1. Cleans the text
+        2. Tokenizes the text
+        3. Removes stop words
+        4. Lemmatizes the tokens
+        
+        Args:
+            text (str): Text to process
+            
+        Returns:
+            list: Processed list of tokens
         """
         # Clean the text
         cleaned_text = self.clean_text(text)
