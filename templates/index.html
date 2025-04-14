@@ -1,206 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WallStreetBets Sentiment Analysis</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Dark theme styles */
-        body {
-            background-color: #121212;
-            color: #e0e0e0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .container {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
-        
-        .card {
-            background-color: #1e1e1e;
-            border: 1px solid #333;
-            margin-bottom: 1.5rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-        }
-        
-        .card-header {
-            background-color: #2d2d2d;
-            color: #fff;
-            border-bottom: 1px solid #333;
-        }
-        
-        .card-body {
-            color: #e0e0e0;
-        }
-        
-        .card-footer {
-            background-color: #2d2d2d;
-            border-top: 1px solid #333;
-            color: #aaa;
-        }
-        
-        .badge {
-            font-size: 0.8rem;
-            padding: 0.4rem 0.6rem;
-            margin-right: 0.3rem;
-            margin-bottom: 0.3rem;
-        }
-        
-        .badge-positive {
-            background-color: #2e7d32;
-            color: #fff;
-        }
-        
-        .badge-negative {
-            background-color: #c62828;
-            color: #fff;
-        }
-        
-        .badge-neutral {
-            background-color: #546e7a;
-            color: #fff;
-        }
-        
-        .badge-ticker {
-            background-color: #1565c0;
-            color: #fff;
-        }
-        
-        .badge-topic {
-            background-color: #6a1b9a;
-            color: #fff;
-        }
-        
-        .stats-card {
-            text-align: center;
-            padding: 1.5rem;
-        }
-        
-        .stats-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stats-label {
-            font-size: 1rem;
-            color: #aaa;
-        }
-        
-        .processed-text {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #2d2d2d;
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            margin-top: 0.5rem;
-            color: #aaa;
-        }
-        
-        .topic-keywords {
-            margin-top: 0.5rem;
-        }
-        
-        .topic-keyword {
-            display: inline-block;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            padding: 0.2rem 0.5rem;
-            background-color: #4527a0;
-            border-radius: 0.25rem;
-            font-size: 0.8rem;
-            color: #fff;
-        }
-        
-        .topic-keyword-weight {
-            color: #aaa;
-            font-size: 0.7rem;
-        }
-        
-        /* Trend analysis styles */
-        .trend-plot {
-            width: 100%;
-            margin-bottom: 1rem;
-            border-radius: 0.25rem;
-            background-color: #2d2d2d;
-            padding: 0.5rem;
-        }
-        
-        .trend-table {
-            width: 100%;
-            margin-bottom: 1rem;
-            background-color: #2d2d2d;
-            border-radius: 0.25rem;
-            overflow: hidden;
-        }
-        
-        .trend-table th {
-            background-color: #333;
-            color: #fff;
-            padding: 0.5rem;
-        }
-        
-        .trend-table td {
-            padding: 0.5rem;
-            border-top: 1px solid #444;
-        }
-        
-        .trend-table tr:hover {
-            background-color: #333;
-        }
-        
-        /* External resources */
-        .external-resources {
-            margin-top: 2rem;
-            padding: 1rem;
-            background-color: #2d2d2d;
-            border-radius: 0.25rem;
-        }
-        
-        .external-resources h4 {
-            color: #fff;
-            margin-bottom: 1rem;
-        }
-        
-        .external-resources ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        
-        .external-resources li {
-            margin-bottom: 0.5rem;
-        }
-        
-        .external-resources a {
-            color: #64b5f6;
-            text-decoration: none;
-        }
-        
-        .external-resources a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Footer */
-        footer {
-            margin-top: 2rem;
-            padding: 1rem 0;
-            text-align: center;
-            color: #aaa;
-            border-top: 1px solid #333;
-        }
-    </style>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
+    <!-- Header Bar with Theme Toggle -->
+    <div class="header-bar">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="h4 mb-0">WallStreetBets Sentiment Analysis</h1>
+                <div class="theme-toggle">
+                    <span class="theme-toggle-icon" id="theme-icon">
+                        <i class="fas fa-moon"></i>
+                    </span>
+                    <span class="theme-toggle-text" id="theme-text">Dark Mode</span>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
-        <h1 class="text-center mb-4">WallStreetBets Sentiment Analysis</h1>
-        
         <!-- Sentiment Statistics -->
         <div class="row mb-4">
             <div class="col-md-3">
@@ -427,5 +258,40 @@
     
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const themeText = document.getElementById('theme-text');
+            const html = document.documentElement;
+            
+            // Check for saved theme preference or use default
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            html.setAttribute('data-theme', savedTheme);
+            themeToggle.checked = savedTheme === 'light';
+            updateThemeUI(savedTheme);
+            
+            // Toggle theme when switch is clicked
+            themeToggle.addEventListener('change', function() {
+                const newTheme = this.checked ? 'light' : 'dark';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeUI(newTheme);
+            });
+            
+            // Update theme UI elements
+            function updateThemeUI(theme) {
+                if (theme === 'light') {
+                    themeIcon.innerHTML = '<i class="fas fa-sun"></i>';
+                    themeText.textContent = 'Light Mode';
+                } else {
+                    themeIcon.innerHTML = '<i class="fas fa-moon"></i>';
+                    themeText.textContent = 'Dark Mode';
+                }
+            }
+        });
+    </script>
 </body>
 </html> 
