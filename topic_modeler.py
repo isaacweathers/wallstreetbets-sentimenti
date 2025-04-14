@@ -78,12 +78,11 @@ class TopicModeler:
     
     def preprocess_documents(self, documents):
         """
-        Preprocess a list of documents for topic modeling.
+        Preprocess documents for topic modeling.
         
         This method:
-        1. Processes each document using the TextProcessor
-        2. Joins the processed tokens back into a string
-        3. Returns a list of preprocessed documents
+        1. Processes each document using TextProcessor
+        2. Joins tokens back into strings
         
         Args:
             documents (list): List of text documents
@@ -93,14 +92,27 @@ class TopicModeler:
         """
         processed_docs = []
         
-        for doc in documents:
+        for i, doc in enumerate(documents):
+            if not isinstance(doc, str):
+                print(f"Warning: Document {i} is not a string: {type(doc)}")
+                continue
+                
             # Process the text using our TextProcessor
-            processed_tokens = self.text_processor.process_text(doc)
+            _, processed_tokens = self.text_processor.process_text(doc)
             
+            if not processed_tokens:
+                print(f"Warning: No tokens generated for document {i}")
+                continue
+                
             # Join tokens back into a string
             processed_doc = ' '.join(processed_tokens)
+            if not processed_doc.strip():
+                print(f"Warning: Empty document after processing document {i}")
+                continue
+                
             processed_docs.append(processed_doc)
         
+        print(f"Processed {len(processed_docs)} documents out of {len(documents)} input documents")
         return processed_docs
     
     def fit(self, documents):
@@ -119,20 +131,34 @@ class TopicModeler:
         Returns:
             self: The fitted model
         """
+        if not documents:
+            print("Warning: No documents provided for topic modeling")
+            return self
+            
         # Preprocess documents
         processed_docs = self.preprocess_documents(documents)
+        if not processed_docs:
+            print("Warning: No documents remained after preprocessing")
+            return self
+            
+        print(f"Preprocessed first document: {processed_docs[0][:100]}...")
         
         # Create document-term matrix
         doc_term_matrix = self.vectorizer.fit_transform(processed_docs)
+        print(f"Document-term matrix shape: {doc_term_matrix.shape}")
         
         # Get feature names (words)
         self.feature_names = self.vectorizer.get_feature_names_out()
+        print(f"Number of features (vocabulary size): {len(self.feature_names)}")
         
         # Fit LDA model
         self.lda_model.fit(doc_term_matrix)
         
         # Extract topics
         self.topics = self._extract_topics()
+        print(f"Number of topics extracted: {len(self.topics)}")
+        if self.topics:
+            print("First topic keywords:", [word for word, _ in self.topics[0]])
         
         return self
     
@@ -220,6 +246,13 @@ class TopicModeler:
             topic_idx = np.argmax(doc_dist)
             topic_prob = doc_dist[topic_idx]
             document_topics.append((documents[i], topic_idx, topic_prob))
+        
+        # Ensure we return the same number of topics as documents
+        if len(document_topics) != len(documents):
+            print(f"Warning: Number of document topics ({len(document_topics)}) does not match number of documents ({len(documents)})")
+            # If we have fewer topics than documents, add placeholder topics
+            while len(document_topics) < len(documents):
+                document_topics.append((documents[len(document_topics)], 0, 0.0))
         
         return document_topics
     

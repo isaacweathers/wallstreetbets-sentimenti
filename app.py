@@ -56,12 +56,12 @@ trend_analyzer = TrendAnalyzer()
 
 def get_wsb_posts():
     """
-    Fetch top posts from r/wallstreetbets from the last 24 hours.
+    Fetch posts from r/wallstreetbets subreddit.
     
     This function:
-    1. Retrieves the top 25 posts from the subreddit
-    2. Processes each post title for text analysis
-    3. Extracts stock tickers mentioned in the title
+    1. Fetches the top posts from r/wallstreetbets from the last week
+    2. Processes each post's title for text analysis
+    3. Extracts stock tickers from the title
     4. Performs sentiment analysis on the title
     5. Returns a list of dictionaries containing post data and analysis results
     
@@ -71,10 +71,10 @@ def get_wsb_posts():
     subreddit = reddit.subreddit('wallstreetbets')
     posts = []
     
-    # Get posts from the last 24 hours
-    for post in subreddit.top(time_filter='day', limit=25):
+    # Get posts from the last week
+    for post in subreddit.top(time_filter='week', limit=100):
         # Process the title for text analysis
-        processed_title = text_processor.process_text(post.title)
+        _, processed_tokens = text_processor.process_text(post.title)
         
         # Extract stock tickers from the title
         tickers = text_processor.extract_tickers(post.title)
@@ -94,7 +94,7 @@ def get_wsb_posts():
         posts.append({
             'id': post.id,
             'title': post.title,
-            'processed_text': ' '.join(processed_title),
+            'processed_text': ' '.join(processed_tokens),
             'tickers': tickers,
             'score': post.score,
             'num_comments': post.num_comments,
@@ -175,27 +175,38 @@ def index():
     
     # Perform topic modeling on post titles
     if len(df) > 0:
-        # Fit the topic modeler on the post titles
-        topic_modeler.fit(df['title'].tolist())
-        
-        # Get document topics (most likely topic for each post)
-        document_topics = topic_modeler.get_document_topics(df['title'].tolist())
-        
-        # Add topic information to the posts
-        for i, post in enumerate(posts):
-            doc, topic_idx, topic_prob = document_topics[i]
-            post['topic_idx'] = topic_idx
-            post['topic_prob'] = topic_prob
-            post['topic'] = f"Topic {topic_idx+1}"
-            post['topic_keywords'] = topic_modeler.get_topic_keywords(topic_idx)
-        
-        # Get all topics for display
-        all_topics = []
-        for i in range(topic_modeler.n_topics):
-            all_topics.append({
-                'idx': i,
-                'keywords': topic_modeler.get_topic_keywords(i)
-            })
+        try:
+            # Fit the topic modeler on the post titles
+            topic_modeler.fit(df['title'].tolist())
+            
+            # Get document topics (most likely topic for each post)
+            document_topics = topic_modeler.get_document_topics(df['title'].tolist())
+            
+            # Add topic information to the posts
+            for i, post in enumerate(posts):
+                if i < len(document_topics):
+                    doc, topic_idx, topic_prob = document_topics[i]
+                    post['topic_idx'] = topic_idx
+                    post['topic_prob'] = topic_prob
+                    post['topic'] = f"Topic {topic_idx+1}"
+                    post['topic_keywords'] = topic_modeler.get_topic_keywords(topic_idx)
+                else:
+                    # Handle case where document_topics is shorter than posts
+                    post['topic_idx'] = -1
+                    post['topic_prob'] = 0.0
+                    post['topic'] = "No topic"
+                    post['topic_keywords'] = []
+            
+            # Get all topics for display
+            all_topics = []
+            for i in range(topic_modeler.n_topics):
+                all_topics.append({
+                    'idx': i,
+                    'keywords': topic_modeler.get_topic_keywords(i)
+                })
+        except Exception as e:
+            print(f"Error in topic modeling: {e}")
+            all_topics = []
     else:
         all_topics = []
     
@@ -206,19 +217,22 @@ def index():
         trend_analyzer.create_dataframe(posts)
         
         # Get ticker trends
-        trend_data['ticker_trends'] = trend_analyzer.get_ticker_trends(top_n=5, time_period='hour')
+        trend_data['ticker_trends'] = trend_analyzer.get_ticker_trends(top_n=10, time_period='day')
         
         # Get topic trends
-        trend_data['topic_trends'] = trend_analyzer.get_topic_trends(time_period='hour')
+        trend_data['topic_trends'] = trend_analyzer.get_topic_trends(time_period='day')
         
         # Get sentiment trends
-        trend_data['sentiment_trends'] = trend_analyzer.get_sentiment_trends(time_period='hour')
+        trend_data['sentiment_trends'] = trend_analyzer.get_sentiment_trends(time_period='day')
         
         # Generate plots
-        trend_data['ticker_mentions_plot'] = trend_analyzer.plot_ticker_mentions(top_n=5, time_period='hour')
-        trend_data['ticker_sentiment_plot'] = trend_analyzer.plot_ticker_sentiment(top_n=5, time_period='hour')
-        trend_data['topic_mentions_plot'] = trend_analyzer.plot_topic_mentions(time_period='hour')
-        trend_data['sentiment_trend_plot'] = trend_analyzer.plot_sentiment_trend(time_period='hour')
+        trend_data['ticker_mentions_plot'] = trend_analyzer.plot_ticker_mentions(top_n=10, time_period='day')
+        trend_data['ticker_sentiment_plot'] = trend_analyzer.plot_ticker_sentiment(top_n=10, time_period='day')
+        trend_data['topic_mentions_plot'] = trend_analyzer.plot_topic_mentions(time_period='day')
+        trend_data['sentiment_trend_plot'] = trend_analyzer.plot_sentiment_trend(time_period='day')
+    
+    # Get current date for the template
+    now = datetime.now()
     
     # Render the template with all the data
     return render_template('index.html', 
@@ -226,7 +240,8 @@ def index():
                           stats=sentiment_stats, 
                           tickers=sorted_tickers,
                           topics=all_topics,
-                          trend_data=trend_data)
+                          trend_data=trend_data,
+                          now=now)
 
 if __name__ == '__main__':
     # Run the Flask application in debug mode
