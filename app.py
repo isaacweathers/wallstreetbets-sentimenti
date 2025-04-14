@@ -15,7 +15,7 @@ The application uses:
 """
 
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 import praw
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
@@ -25,20 +25,29 @@ from dotenv import load_dotenv
 from text_processor import TextProcessor
 from topic_modeler import TopicModeler
 from trend_analyzer import TrendAnalyzer
-
-# Download required NLTK data for sentiment analysis
-nltk.download('vader_lexicon')
+import logging
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Download required NLTK data
+logger.info("Downloading required NLTK data...")
+nltk.download('punkt')
+nltk.download('vader_lexicon')
+nltk.download('averaged_perceptron_tagger')
+logger.info("NLTK data downloaded successfully")
 
 # Initialize Flask application
 app = Flask(__name__)
 
 # Add custom Jinja2 filter for datetime formatting
-@app.template_filter('datetime')
+@app.template_filter('format_datetime')
 def format_datetime(timestamp):
-    """Format a Unix timestamp as a readable datetime string."""
+    """Convert Unix timestamp to formatted datetime string."""
     return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
 # Initialize Reddit API client using credentials from environment variables

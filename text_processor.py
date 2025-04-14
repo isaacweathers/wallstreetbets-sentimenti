@@ -20,12 +20,15 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tag import pos_tag
+import logging
 
 # Download required NLTK data
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 nltk.download('averaged_perceptron_tagger')
+
+logger = logging.getLogger(__name__)
 
 class TextProcessor:
     """
@@ -247,41 +250,33 @@ class TextProcessor:
     
     def lemmatize(self, tokens):
         """
-        Lemmatize the tokens using WordNet lemmatizer.
-        Preserve tickers.
-        
-        This method:
-        1. Preserves tokens that are tickers
-        2. Gets the part of speech tag for each token
-        3. Maps the POS tag to WordNet POS tag
-        4. Lemmatizes the token using the appropriate POS tag
+        Lemmatize tokens using WordNet lemmatizer with part-of-speech tagging.
         
         Args:
             tokens (list): List of tokens to lemmatize
             
         Returns:
-            list: Lemmatized list of tokens
+            list: List of lemmatized tokens
         """
+        lemmatizer = WordNetLemmatizer()
         lemmatized_tokens = []
+        
         for token in tokens:
-            if self.is_ticker(token):
-                lemmatized_tokens.append(token)
-            else:
-                # Get the part of speech tag
+            try:
+                # Try to get part-of-speech tag
                 pos_tagged = pos_tag([token])[0][1]
                 
-                # Map the POS tag to WordNet POS tag
-                pos = 'n'  # default to noun
-                if pos_tagged.startswith('J'):
-                    pos = 'a'  # adjective
-                elif pos_tagged.startswith('V'):
-                    pos = 'v'  # verb
-                elif pos_tagged.startswith('R'):
-                    pos = 'r'  # adverb
+                # Map NLTK POS tags to WordNet POS tags
+                pos = self._get_wordnet_pos(pos_tagged)
                 
-                # Lemmatize the token
-                lemmatized_token = self.lemmatizer.lemmatize(token, pos=pos)
-                lemmatized_tokens.append(lemmatized_token)
+                # Lemmatize with POS tag
+                lemmatized = lemmatizer.lemmatize(token, pos=pos)
+                lemmatized_tokens.append(lemmatized)
+            except (LookupError, IndexError) as e:
+                # If tagger is not available or tagging fails, use default lemmatization
+                logger.warning(f"POS tagging failed for token '{token}': {e}. Using default lemmatization.")
+                lemmatized = lemmatizer.lemmatize(token)
+                lemmatized_tokens.append(lemmatized)
         
         return lemmatized_tokens
     
@@ -313,4 +308,25 @@ class TextProcessor:
         # Lemmatize
         tokens = self.lemmatize(tokens)
         
-        return tokens 
+        return tokens
+    
+    def _get_wordnet_pos(self, pos_tag):
+        """
+        Map NLTK POS tags to WordNet POS tags.
+        
+        Args:
+            pos_tag (str): NLTK POS tag
+            
+        Returns:
+            str: WordNet POS tag
+        """
+        # Map NLTK POS tags to WordNet POS tags
+        pos = 'n'  # default to noun
+        if pos_tag.startswith('J'):
+            pos = 'a'  # adjective
+        elif pos_tag.startswith('V'):
+            pos = 'v'  # verb
+        elif pos_tag.startswith('R'):
+            pos = 'r'  # adverb
+        
+        return pos 
