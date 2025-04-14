@@ -420,18 +420,15 @@
                                 <span class="badge bg-info">Comments: {{ post.num_comments }}</span>
                             </div>
                             <div>
-                                {% if post.sentiment.compound > 0.05 %}
-                                <span class="sentiment-positive">Positive ({{ "%.2f"|format(post.sentiment.compound) }})</span>
-                                {% elif post.sentiment.compound < -0.05 %}
-                                <span class="sentiment-negative">Negative ({{ "%.2f"|format(post.sentiment.compound) }})</span>
-                                {% else %}
-                                <span class="sentiment-neutral">Neutral ({{ "%.2f"|format(post.sentiment.compound) }})</span>
-                                {% endif %}
+                                <span class="badge {% if post.sentiment.compound > 0 %}badge-positive{% elif post.sentiment.compound < 0 %}badge-negative{% else %}badge-neutral{% endif %}">
+                                    Sentiment: {{ "%.2f"|format(post.sentiment.compound) }}
+                                </span>
+                                <small class="text-muted ms-2">Posted: {{ post.created_utc|format_datetime }}</small>
                             </div>
                         </div>
                     </div>
                     <div class="card-footer text-muted">
-                        Posted {{ post.created_utc|datetime }}
+                        Posted {{ post.created_utc|format_datetime }}
                     </div>
                 </div>
             </div>
