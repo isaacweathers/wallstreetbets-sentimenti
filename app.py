@@ -15,7 +15,7 @@ The application uses:
 """
 
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 import praw
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
@@ -25,6 +25,7 @@ from dotenv import load_dotenv
 from text_processor import TextProcessor
 from topic_modeler import TopicModeler
 from trend_analyzer import TrendAnalyzer
+import logging
 
 # Download required NLTK data for sentiment analysis
 nltk.download('vader_lexicon')
@@ -32,13 +33,17 @@ nltk.download('vader_lexicon')
 # Load environment variables from .env file
 load_dotenv()
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Initialize Flask application
 app = Flask(__name__)
 
 # Add custom Jinja2 filter for datetime formatting
-@app.template_filter('datetime')
+@app.template_filter('format_datetime')
 def format_datetime(timestamp):
-    """Format a Unix timestamp as a readable datetime string."""
+    """Convert Unix timestamp to formatted datetime string."""
     return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
 # Initialize Reddit API client using credentials from environment variables
@@ -151,9 +156,9 @@ def index():
     # Calculate overall sentiment statistics
     sentiment_stats = {
         'total_posts': len(df),
-        'positive_posts': len(df[df['sentiment_compound'] > 0.05]),
-        'negative_posts': len(df[df['sentiment_compound'] < -0.05]),
-        'neutral_posts': len(df[(df['sentiment_compound'] >= -0.05) & (df['sentiment_compound'] <= 0.05)]),
+        'positive_count': len(df[df['sentiment_compound'] > 0.05]),
+        'negative_count': len(df[df['sentiment_compound'] < -0.05]),
+        'neutral_count': len(df[(df['sentiment_compound'] >= -0.05) & (df['sentiment_compound'] <= 0.05)]),
         'avg_sentiment': df['sentiment_compound'].mean()
     }
     
@@ -172,6 +177,11 @@ def index():
     
     # Sort tickers by frequency (most mentioned first)
     sorted_tickers = sorted(ticker_counts.items(), key=lambda x: x[1], reverse=True)
+    
+    # Create ticker_stats object for the template
+    ticker_stats = {
+        'most_common': sorted_tickers[:10]  # Top 10 most mentioned tickers
+    }
     
     # Perform topic modeling on post titles
     if len(df) > 0:
@@ -202,7 +212,8 @@ def index():
             for i in range(topic_modeler.n_topics):
                 all_topics.append({
                     'idx': i,
-                    'keywords': topic_modeler.get_topic_keywords(i)
+                    'keywords': topic_modeler.get_topic_keywords(i),
+                    'probability': 1.0 / topic_modeler.n_topics  # Default probability
                 })
         except Exception as e:
             print(f"Error in topic modeling: {e}")
@@ -237,8 +248,8 @@ def index():
     # Render the template with all the data
     return render_template('index.html', 
                           posts=posts, 
-                          stats=sentiment_stats, 
-                          tickers=sorted_tickers,
+                          sentiment_stats=sentiment_stats,
+                          ticker_stats=ticker_stats,
                           topics=all_topics,
                           trend_data=trend_data,
                           now=now)
