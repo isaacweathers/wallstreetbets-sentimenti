@@ -37,7 +37,6 @@ logger = logging.getLogger(__name__)
 # Download required NLTK data
 logger.info("Downloading required NLTK data...")
 nltk.download('punkt')
-nltk.download('punkt_tab')
 nltk.download('vader_lexicon')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('averaged_perceptron_tagger_eng')
