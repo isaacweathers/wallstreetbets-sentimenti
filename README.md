@@ -1,113 +1,167 @@
 # WallStreetBets Sentiment Analysis
 
-A web application that analyzes sentiment and topics from r/wallstreetbets posts using Reddit's API, NLTK for sentiment analysis, and Latent Dirichlet Allocation (LDA) for topic modeling.
-
-## Overview
-
-This application fetches posts from the r/wallstreetbets subreddit, performs sentiment analysis and topic modeling on the posts, and displays the results in a web interface. It provides insights into the sentiment of the WallStreetBets community and the topics they're discussing.
+A web application that analyzes sentiment and topics from r/wallstreetbets posts using natural language processing and machine learning techniques.
 
 ## Features
 
-### Data Collection
-- Fetches top 25 posts from r/wallstreetbets from the last 24 hours
-- Extracts post titles, scores, comment counts, and URLs
+- **Sentiment Analysis**: Analyzes the sentiment of posts using VADER sentiment analysis
+- **Topic Modeling**: Identifies main topics in posts using LDA (Latent Dirichlet Allocation)
+- **Ticker Extraction**: Automatically identifies stock tickers mentioned in posts
+- **Trend Analysis**: Visualizes trends in ticker mentions, sentiment, and topics over time
+- **Interactive UI**: Modern, responsive interface with dark/light mode toggle
 
-### Text Processing
-- Cleans text by removing URLs, emojis, special characters, and numbers
-- Extracts stock tickers from post titles
-- Tokenizes text into words
-- Removes stop words
-- Lemmatizes words to their base form
+## Setup Instructions
 
-### Sentiment Analysis
-- Performs sentiment analysis on post titles using NLTK's VADER sentiment analyzer
-- Calculates compound, positive, negative, and neutral sentiment scores
-- Categorizes posts as positive, negative, or neutral based on sentiment scores
-- Provides sentiment statistics (total posts, positive posts, negative posts, neutral posts)
+### Prerequisites
 
-### Topic Modeling
-- Uses Latent Dirichlet Allocation (LDA) to identify topics in post titles
-- Extracts keywords for each topic with their weights
-- Assigns each post to its most likely topic
-- Displays topic modeling results with keywords and weights
+- Python 3.8 or higher
+- pip (Python package installer)
+- A Reddit API account (for accessing r/wallstreetbets data)
 
-### Ticker Analysis
-- Extracts stock tickers mentioned in post titles
-- Counts the frequency of each ticker
-- Displays the most mentioned tickers
+### Installation
 
-### Trend Analysis
-- Aggregates data by time (hourly) and by stock ticker or topic
-- Calculates metrics such as mention counts, average sentiment, and post scores
-- Visualizes trends using matplotlib and seaborn
-- Provides interactive plots for ticker mentions, ticker sentiment, topic mentions, and overall sentiment
-- Displays detailed data tables for tickers, topics, and sentiment over time
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/wallstreetbets-sentiment.git
+   cd wallstreetbets-sentiment
+   ```
 
-### User Interface
-- Modern, responsive UI using Bootstrap
-- Displays posts with their scores, comment counts, and sentiment scores
-- Color-coded sentiment indicators (green for positive, red for negative, gray for neutral)
-- Interactive cards with hover effects
-- Organized sections for sentiment statistics, topic modeling results, ticker statistics, and trend analysis
+2. Create and activate a virtual environment (recommended):
+   ```bash
+   # On Windows
+   python -m venv venv
+   venv\Scripts\activate
 
-## Setup
+   # On macOS/Linux
+   python -m venv venv
+   source venv/bin/activate
+   ```
 
-1. Clone this repository
-2. Install the required packages:
+3. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the root directory with your Reddit API credentials:
+4. Create a `.env` file in the project root with your Reddit API credentials:
    ```
    REDDIT_CLIENT_ID=your_client_id
    REDDIT_CLIENT_SECRET=your_client_secret
-   REDDIT_USER_AGENT=your_app_name_v1.0
+   REDDIT_USER_AGENT=your_user_agent
    ```
 
-   To get these credentials:
+   To obtain these credentials:
    1. Go to https://www.reddit.com/prefs/apps
-   2. Click "create another app..."
-   3. Select "script"
+   2. Click "Create another app..."
+   3. Select "script" as the application type
    4. Fill in the required information
-   5. Copy the client ID and client secret to your .env file
+   5. After creation, note the client ID (under the app name) and client secret
 
-4. Run the application:
+### Running the Application
+
+1. Start the Flask application:
    ```bash
    python app.py
    ```
 
-5. Open your browser and navigate to `http://localhost:5000`
+2. Open your web browser and navigate to:
+   ```
+   http://localhost:5000
+   ```
+
+## Usage Guide
+
+### Main Dashboard
+
+The main dashboard displays:
+- Recent posts from r/wallstreetbets
+- Sentiment analysis results for each post
+- Identified stock tickers
+- Topic modeling results
+
+### Sentiment Analysis
+
+- Each post is analyzed for sentiment (positive, negative, or neutral)
+- Sentiment scores are displayed with color-coded badges
+- The sentiment analysis uses VADER, which is specifically tuned for social media text
+
+### Topic Modeling
+
+- The application automatically identifies main topics in the posts
+- Topics are displayed with their associated keywords
+- Each post is assigned to the most relevant topic
+
+### Ticker Extraction
+
+- Stock tickers are automatically extracted from post content
+- Tickers are displayed as badges on each post
+- The system recognizes common stock symbols and filters out false positives
+
+### Trend Analysis
+
+- Visualizes trends in ticker mentions over time
+- Shows sentiment trends for specific tickers
+- Displays topic popularity trends
+- Provides interactive plots and data tables
+
+### UI Features
+
+- **Dark/Light Mode**: Toggle between dark and light themes using the switch in the header
+- **Responsive Design**: Works on desktop and mobile devices
+- **Interactive Elements**: Hover over elements for additional information
+- **Data Tables**: Sort and filter data in the trend analysis tables
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Reddit API Authentication Errors**:
+   - Verify your Reddit API credentials in the `.env` file
+   - Ensure your Reddit account has the necessary permissions
+
+2. **NLTK Data Missing**:
+   - The application will attempt to download required NLTK data automatically
+   - If issues persist, manually download the data:
+     ```python
+     import nltk
+     nltk.download('punkt')
+     nltk.download('averaged_perceptron_tagger')
+     nltk.download('wordnet')
+     nltk.download('vader_lexicon')
+     ```
+
+3. **Application Not Starting**:
+   - Check that all dependencies are installed correctly
+   - Verify that the Flask application is running on the correct port
+   - Check the console for error messages
 
 ## Project Structure
 
-- `app.py` - Main Flask application
-- `text_processor.py` - Text processing utilities
-- `topic_modeler.py` - Topic modeling using LDA
-- `trend_analyzer.py` - Trend analysis and visualization
-- `templates/index.html` - HTML template for the web interface
-- `requirements.txt` - Python dependencies
+- `app.py`: Main Flask application
+- `text_processor.py`: Text processing and sentiment analysis
+- `topic_modeler.py`: Topic modeling using LDA
+- `trend_analyzer.py`: Trend analysis and visualization
+- `templates/`: HTML templates
+- `static/`: CSS, JavaScript, and other static files
 
 ## Technologies Used
 
-- **Flask** - Web framework
-- **PRAW** - Reddit API wrapper
-- **NLTK** - Natural Language Toolkit for sentiment analysis
-- **scikit-learn** - Machine learning library for topic modeling
-- **pandas** - Data manipulation and analysis
-- **matplotlib** - Data visualization
-- **seaborn** - Statistical data visualization
-- **Bootstrap** - Frontend framework
-- **Python-dotenv** - Environment variable management
-- **Jinja2** - Template engine
+- **Flask**: Web framework
+- **PRAW**: Reddit API wrapper
+- **NLTK**: Natural language processing
+- **VADER**: Sentiment analysis
+- **Gensim**: Topic modeling
+- **Pandas**: Data manipulation
+- **Matplotlib/Seaborn**: Data visualization
+- **Plotly**: Interactive plots
 
 ## Future Enhancements
 
-- Add historical sentiment analysis
-- Implement user authentication
-- Add more detailed post analysis
-- Include sentiment analysis for comments
-- Add visualization of sentiment trends over time
-- Implement real-time updates using WebSockets
 - Add more advanced trend analysis features
-- Implement machine learning for stock price prediction 
+- Implement machine learning for stock price prediction
+- Add user authentication for personalized dashboards
+- Expand data sources beyond Reddit
+- Implement real-time analysis with WebSockets
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 
