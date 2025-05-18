@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
+    ports:
+      - "5000:5000"
+    environment:
+      - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
+    volumes:
+      - .:/app
+    command: python app.py
+    env_file:
+      - .env
+    restart: unless-stopped 

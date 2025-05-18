@@ -237,6 +237,10 @@ def index():
                           topics=all_topics,
                           trend_data=trend_data)
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for the load balancer."""
+    return jsonify({"status": "healthy"}), 200
+
 if __name__ == '__main__':
-    # Run the Flask application in debug mode
-    app.run(debug=True) 
+    app.run(host='0.0.0.0', port=9000)
